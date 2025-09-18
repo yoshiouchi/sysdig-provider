@@ -1,0 +1,110 @@
+name: terraform-plan
+
+on:
+  pull_request:
+    paths:
+      - 'envs/**'
+      - 'modules/**'
+      - 'providers/**'
+      - 'global/**'
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      dev: ${{ steps.changes.outputs.dev }}
+      staging: ${{ steps.changes.outputs.staging }}
+      prod: ${{ steps.changes.outputs.prod }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            dev:
+              - 'envs/dev/**'
+              - 'modules/**'
+              - 'providers/**'
+              - 'global/**'
+            staging:
+              - 'envs/staging/**'
+              - 'modules/**'
+              - 'providers/**'
+              - 'global/**'
+            prod:
+              - 'envs/prod/**'
+              - 'modules/**'
+              - 'providers/**'
+              - 'global/**'
+
+  plan-dev:
+    if: needs.detect.outputs.dev == 'true'
+    needs: detect
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: Terraform Init (dev)
+        working-directory: envs/dev
+        env:
+          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+          SYSDIG_SECURE_API_TOKEN:  ${{ secrets.SYSDIG_SECURE_API_TOKEN }}
+          SYSDIG_MONITOR_API_TOKEN: ${{ secrets.SYSDIG_MONITOR_API_TOKEN }}
+        run: terraform init -input=false
+      - name: Validate + Plan (dev)
+        working-directory: envs/dev
+        env:
+          SYSDIG_SECURE_API_TOKEN:  ${{ secrets.SYSDIG_SECURE_API_TOKEN }}
+          SYSDIG_MONITOR_API_TOKEN: ${{ secrets.SYSDIG_MONITOR_API_TOKEN }}
+        run: |
+          terraform fmt -check -recursive
+          terraform validate
+          terraform plan -input=false -var-file=dev.tfvars
+
+  plan-staging:
+    if: needs.detect.outputs.staging == 'true'
+    needs: detect
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: Init (staging)
+        working-directory: envs/staging
+        env:
+          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+          SYSDIG_SECURE_API_TOKEN:  ${{ secrets.SYSDIG_SECURE_API_TOKEN }}
+          SYSDIG_MONITOR_API_TOKEN: ${{ secrets.SYSDIG_MONITOR_API_TOKEN }}
+        run: terraform init -input=false
+      - name: Validate + Plan (staging)
+        working-directory: envs/staging
+        env:
+          SYSDIG_SECURE_API_TOKEN:  ${{ secrets.SYSDIG_SECURE_API_TOKEN }}
+          SYSDIG_MONITOR_API_TOKEN: ${{ secrets.SYSDIG_MONITOR_API_TOKEN }}
+        run: |
+          terraform fmt -check -recursive
+          terraform validate
+          terraform plan -input=false -var-file=staging.tfvars
+
+  plan-prod:
+    if: needs.detect.outputs.prod == 'true'
+    needs: detect
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: Init (prod)
+        working-directory: envs/prod
+        env:
+          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+          SYSDIG_SECURE_API_TOKEN:  ${{ secrets.SYSDIG_SECURE_API_TOKEN }}
+          SYSDIG_MONITOR_API_TOKEN: ${{ secrets.SYSDIG_MONITOR_API_TOKEN }}
+        run: terraform init -input=false
+      - name: Validate + Plan (prod)
+        working-directory: envs/prod
+        env:
+          SYSDIG_SECURE_API_TOKEN:  ${{ secrets.SYSDIG_SECURE_API_TOKEN }}
+          SYSDIG_MONITOR_API_TOKEN: ${{ secrets.SYSDIG_MONITOR_API_TOKEN }}
+        run: |
+          terraform fmt -check -recursive
+          terraform validate
+          terraform plan -input=false -var-file=prod.tfvars
