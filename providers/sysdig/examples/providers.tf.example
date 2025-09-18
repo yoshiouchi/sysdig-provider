@@ -8,7 +8,7 @@ terraform {
   }
 }
 
-# Aliases per domain
-provider "sysdig" { alias = "secure" }
-provider "sysdig" { alias = "monitor" }
-provider "sysdig" { alias = "platform" }
+# Copy this into envs/*/providers.tf and adjust URLs via tfvars.
+provider "sysdig" { alias = "secure"   sysdig_secure_url  = var.sysdig_secure_url }
+provider "sysdig" { alias = "monitor"  sysdig_monitor_url = var.sysdig_monitor_url }
+provider "sysdig" { alias = "platform" sysdig_secure_url  = var.sysdig_secure_url }
