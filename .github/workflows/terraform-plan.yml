@@ -41,16 +41,22 @@ jobs:
     if: needs.detect.outputs.dev == 'true'
     needs: detect
     runs-on: ubuntu-latest
+    concurrency: plan-dev
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.2
+          cli_config_credentials_hostname: app.terraform.io
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
       - name: Terraform Init (dev)
         working-directory: envs/dev
         env:
-          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
           SYSDIG_SECURE_API_TOKEN:  ${{ secrets.SYSDIG_SECURE_API_TOKEN }}
           SYSDIG_MONITOR_API_TOKEN: ${{ secrets.SYSDIG_MONITOR_API_TOKEN }}
         run: terraform init -input=false
+
       - name: Validate + Plan (dev)
         working-directory: envs/dev
         env:
@@ -65,16 +71,22 @@ jobs:
     if: needs.detect.outputs.staging == 'true'
     needs: detect
     runs-on: ubuntu-latest
+    concurrency: plan-staging
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
-      - name: Init (staging)
+        with:
+          terraform_version: 1.13.2
+          cli_config_credentials_hostname: app.terraform.io
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform Init (staging)
         working-directory: envs/staging
         env:
-          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
           SYSDIG_SECURE_API_TOKEN:  ${{ secrets.SYSDIG_SECURE_API_TOKEN }}
           SYSDIG_MONITOR_API_TOKEN: ${{ secrets.SYSDIG_MONITOR_API_TOKEN }}
         run: terraform init -input=false
+
       - name: Validate + Plan (staging)
         working-directory: envs/staging
         env:
@@ -89,16 +101,22 @@ jobs:
     if: needs.detect.outputs.prod == 'true'
     needs: detect
     runs-on: ubuntu-latest
+    concurrency: plan-prod
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
-      - name: Init (prod)
+        with:
+          terraform_version: 1.13.2
+          cli_config_credentials_hostname: app.terraform.io
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform Init (prod)
         working-directory: envs/prod
         env:
-          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
           SYSDIG_SECURE_API_TOKEN:  ${{ secrets.SYSDIG_SECURE_API_TOKEN }}
           SYSDIG_MONITOR_API_TOKEN: ${{ secrets.SYSDIG_MONITOR_API_TOKEN }}
         run: terraform init -input=false
+
       - name: Validate + Plan (prod)
         working-directory: envs/prod
         env:
