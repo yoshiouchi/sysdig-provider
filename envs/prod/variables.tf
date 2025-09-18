@@ -8,6 +8,18 @@ variable "sysdig_monitor_url" {
   type        = string
 }
 
+variable "org_name" {
+  description = "Org name for naming/tags (optional)"
+  type        = string
+  default     = null
+}
+
+variable "default_team" {
+  description = "If set, name of the Secure team to mark as default (optional)"
+  type        = string
+  default     = null
+}
+
 # Optional: keep region if you use it elsewhere
 variable "region" {
   description = "Sysdig region (e.g., au1)"

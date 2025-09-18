@@ -1,5 +1,10 @@
 terraform {
-  backend "local" {
-    path = "terraform.tfstate" # optional; default is terraform.tfstate in this folder
+  cloud {
+    hostname     = "app.terraform.io"
+    organization = "yoshiouchi"
+    workspaces {
+      name    = "sysdig-provider-dev"
+      project = "Sysdig Provider"   # <-- goes here
+    }
   }
 }
