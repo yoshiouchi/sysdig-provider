@@ -10,9 +10,11 @@ module "platform_custom_roles" {
 module "secure_teams" {
   source    = "../../modules/sysdig_secure/resources/sysdig_secure_team"
   providers = { sysdig = sysdig.secure }
+
   teams = [
     for t in var.secure_teams : merge(t, {
-      custom_role_id = try(module.platform_custom_roles.role_ids["readonly_analyst"], null)
+      # keep explicit per-team override if set, otherwise mark the named team as default
+      default = try(t.default, false) || (var.default_team != null && t.name == var.default_team)
     })
   ]
 }

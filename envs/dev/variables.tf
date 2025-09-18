@@ -4,13 +4,15 @@ variable "region" {
 }
 
 variable "org_name" {
-  description = "Org name for naming/tags"
+  description = "Org name for naming/tags (optional)"
   type        = string
+  default     = null
 }
 
 variable "default_team" {
-  description = "Default team"
+  description = "If set, name of the Secure team to mark as default (optional)"
   type        = string
+  default     = null
 }
 
 variable "sysdig_secure_url" {
