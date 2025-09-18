@@ -29,7 +29,7 @@ In `envs/dev/main.tf`, add a minimal usage example and map the **platform** alia
 
 ```hcl
 module "platform_custom_roles" {
-  source = "../../modules/sysdig_platform/resources/custom_role"
+  source = "../../modules/sysdig_platform/resources/sysdig_custom_role"
 
   providers = {
     sysdig.platform = sysdig.platform

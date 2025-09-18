@@ -1,7 +1,5 @@
 terraform {
-  backend "remote" {
-    hostname     = "app.terraform.io"
-    organization = "yoshiouchi"
-    workspaces { name = "sysdig-dev" }
+  backend "local" {
+    path = "terraform.tfstate" # optional; default is terraform.tfstate in this folder
   }
 }

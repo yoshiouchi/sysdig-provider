@@ -1,5 +1,5 @@
 module "platform_custom_roles" {
-  source = "../../modules/sysdig_platform/resources/custom_role" # we'll add this next
+  source = "../../modules/sysdig_platform/resources/sysdig_custom_role" # we'll add this next
   providers = {
     sysdig.platform = sysdig.platform
   }

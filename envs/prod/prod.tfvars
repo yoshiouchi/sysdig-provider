@@ -1,5 +1,5 @@
-region       = "au1"
-org_name     = "yoshiouchi"
-default_team = "platform"
+region             = "au1"
+org_name           = "yoshiouchi"
+default_team       = "platform"
 sysdig_secure_url  = "https://app.au1.sysdig.com"
 sysdig_monitor_url = "https://app.au1.sysdig.com"
