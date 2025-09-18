@@ -1,0 +1,3 @@
+provider "sysdig" { alias = "secure" }
+provider "sysdig" { alias = "monitor" }
+provider "sysdig" { alias = "platform" }
