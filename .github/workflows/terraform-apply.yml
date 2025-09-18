@@ -1,19 +1,38 @@
-- uses: hashicorp/setup-terraform@v3
-  with:
-    terraform_version: 1.13.2
-    cli_config_credentials_hostname: app.terraform.io
-    cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+name: terraform-apply
 
-- name: Terraform Init
-  working-directory: envs/${{ env.TARGET_ENV }}
-  env:
-    SYSDIG_SECURE_API_TOKEN:  ${{ secrets.SYSDIG_SECURE_API_TOKEN }}
-    SYSDIG_MONITOR_API_TOKEN: ${{ secrets.SYSDIG_MONITOR_API_TOKEN }}
-  run: terraform init -input=false
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: "Environment to apply (dev|staging|prod)"
+        required: true
+        default: dev
 
-- name: Terraform Apply
-  working-directory: envs/${{ env.TARGET_ENV }}
-  env:
-    SYSDIG_SECURE_API_TOKEN:  ${{ secrets.SYSDIG_SECURE_API_TOKEN }}
-    SYSDIG_MONITOR_API_TOKEN: ${{ secrets.SYSDIG_MONITOR_API_TOKEN }}
-  run: terraform apply -input=false -auto-approve -var-file=${{ env.TARGET_ENV }}.tfvars
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    concurrency: apply-${{ github.event.inputs.env }}
+    env:
+      TARGET_ENV: ${{ github.event.inputs.env }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.2
+          cli_config_credentials_hostname: app.terraform.io
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform Init
+        working-directory: envs/${{ env.TARGET_ENV }}
+        env:
+          SYSDIG_SECURE_API_TOKEN:  ${{ secrets.SYSDIG_SECURE_API_TOKEN }}
+          SYSDIG_MONITOR_API_TOKEN: ${{ secrets.SYSDIG_MONITOR_API_TOKEN }}
+        run: terraform init -input=false
+
+      - name: Terraform Apply
+        working-directory: envs/${{ env.TARGET_ENV }}
+        env:
+          SYSDIG_SECURE_API_TOKEN:  ${{ secrets.SYSDIG_SECURE_API_TOKEN }}
+          SYSDIG_MONITOR_API_TOKEN: ${{ secrets.SYSDIG_MONITOR_API_TOKEN }}
+        run: terraform apply -input=false -auto-approve -var-file=${{ env.TARGET_ENV }}.tfvars
