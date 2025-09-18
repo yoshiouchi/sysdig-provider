@@ -13,9 +13,9 @@ module "secure_teams" {
 
   teams = [
     for t in var.secure_teams : merge(t, {
-      # true if the item explicitly sets default=true
-      # OR if it matches the env-level default_team name
+      # true if explicitly set to true OR matches env-level default_team
       default = (t.default == true) || (var.default_team != null && t.name == var.default_team)
+      # alternatively: default = coalesce(t.default, false) || (var.default_team != null && t.name == var.default_team)
     })
   ]
 }

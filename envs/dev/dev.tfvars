@@ -1,4 +1,4 @@
-region       = "au1"
+region = "au1"
 # Region endpoints (AU1 Sydney)
 sysdig_secure_url  = "https://app.au1.sysdig.com"
 sysdig_monitor_url = "https://app.au1.sysdig.com"
@@ -40,3 +40,4 @@ monitor_event_alerts = [
     # notification_channels = [{ id = 1234 }]
   }
 ]
+# CI test: no-op change to trigger plan

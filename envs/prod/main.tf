@@ -13,8 +13,9 @@ module "secure_teams" {
 
   teams = [
     for t in var.secure_teams : merge(t, {
-      # keep explicit per-team override if set, otherwise mark the named team as default
-      default = try(t.default, false) || (var.default_team != null && t.name == var.default_team)
+      # true if explicitly set to true OR matches env-level default_team
+      default = (t.default == true) || (var.default_team != null && t.name == var.default_team)
+      # alternatively: default = coalesce(t.default, false) || (var.default_team != null && t.name == var.default_team)
     })
   ]
 }

@@ -4,7 +4,7 @@ terraform {
     organization = "yoshiouchi"
     workspaces {
       name    = "sysdig-provider-dev"
-      project = "Sysdig Provider"   # <-- goes here
+      project = "Sysdig Provider" # <-- goes here
     }
   }
 }
