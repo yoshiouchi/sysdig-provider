@@ -40,3 +40,4 @@ monitor_event_alerts = [
     # notification_channels = [{ id = 1234 }]
   }
 ]
+# CI test: no-op change to trigger plan
