@@ -24,6 +24,8 @@ provider "sysdig" {
 # Start by pointing at Secure’s URL/token. If a specific resource requires
 # Monitor, you can re-point this alias in that env.
 provider "sysdig" {
-  alias             = "platform"
-  sysdig_secure_url = var.sysdig_secure_url
+  alias                    = "platform"
+  sysdig_secure_url        = var.sysdig_secure_url
+  sysdig_secure_api_token  = var.sysdig_secure_api_token
+  # intentionally NOT setting monitor here
 }
