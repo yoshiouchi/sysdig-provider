@@ -1,0 +1,60 @@
+name: terraform-destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: "Environment to destroy (dev|staging|prod)"
+        required: true
+        default: dev
+      confirm:
+        description: 'Type "DESTROY" to confirm you understand this will delete resources'
+        required: true
+        default: ""
+
+jobs:
+  destroy:
+    # Gate prod with an Environment named "prod" (set required reviewers in repo settings)
+    environment: ${{ github.event.inputs.env == 'prod' && 'prod' || '' }}
+    runs-on: ubuntu-latest
+    concurrency: destroy-${{ github.event.inputs.env }}
+    env:
+      TARGET_ENV: ${{ github.event.inputs.env }}
+    steps:
+      - name: Guardrail - require explicit confirmation
+        if: ${{ github.event.inputs.confirm != 'DESTROY' }}
+        run: |
+          echo "::error::Refusing to proceed: confirmation mismatch. You must type DESTROY to run this workflow."
+          exit 1
+
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.2
+          cli_config_credentials_hostname: app.terraform.io
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform Init
+        working-directory: envs/${{ env.TARGET_ENV }}
+        env:
+          SYSDIG_SECURE_API_TOKEN:  ${{ secrets.SYSDIG_SECURE_API_TOKEN }}
+          SYSDIG_MONITOR_API_TOKEN: ${{ secrets.SYSDIG_MONITOR_API_TOKEN }}
+        run: terraform init -input=false
+
+      - name: Safety Plan (destroy)
+        working-directory: envs/${{ env.TARGET_ENV }}
+        env:
+          SYSDIG_SECURE_API_TOKEN:  ${{ secrets.SYSDIG_SECURE_API_TOKEN }}
+          SYSDIG_MONITOR_API_TOKEN: ${{ secrets.SYSDIG_MONITOR_API_TOKEN }}
+        run: |
+          terraform fmt -check -recursive
+          terraform validate
+          terraform plan -input=false -destroy -var-file=${{ env.TARGET_ENV }}.tfvars
+
+      - name: Terraform Destroy (auto-approve)
+        working-directory: envs/${{ env.TARGET_ENV }}
+        env:
+          SYSDIG_SECURE_API_TOKEN:  ${{ secrets.SYSDIG_SECURE_API_TOKEN }}
+          SYSDIG_MONITOR_API_TOKEN: ${{ secrets.SYSDIG_MONITOR_API_TOKEN }}
+        run: terraform destroy -input=false -auto-approve -var-file=${{ env.TARGET_ENV }}.tfvars
