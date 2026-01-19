@@ -369,6 +369,97 @@ This repo includes two workflows:
 
 ---
 
+## Decommissioning (Terraform Destroy) — GCP Onboarding & Other Sysdig Resources
+
+This section explains how to **safely tear down** resources managed by this repo (e.g., Sysdig GCP onboarding artifacts like Pub/Sub topics/subscriptions, Log Router sinks, service accounts & IAM bindings; plus Sysdig Platform/Secure/Monitor resources such as roles, teams, and alerts).
+
+> ⚠️ **Irreversible:** `terraform destroy` removes resources. Always review a **destroy plan** first and ensure you’re targeting the correct **environment** (`envs/dev`, `envs/staging`, `envs/prod`).
+
+### Pre-destroy checklist (GCP onboarding focus)
+
+- Pick the correct **environment** (e.g., `dev` vs `staging` vs `prod`).
+- Communicate impact: data ingestion to Sysdig will stop once sinks/subscriptions are removed.
+- Optional: **pause** ingestion first (disable sinks / stop exporters) if you want a controlled shutdown.
+- Ensure access to **remote state** (Terraform Cloud or S3) and valid **Sysdig tokens**.
+- If anything was created **outside Terraform**, plan separate manual cleanup.
+
+---
+
+### Option A — Destroy locally
+
+```bash
+# 1) select the environment
+cd envs/dev    # or envs/staging, envs/prod
+
+# 2) ensure tokens are set (team-scoped, admin-capable)
+export SYSDIG_SECURE_API_TOKEN="..."
+export SYSDIG_MONITOR_API_TOKEN="..."
+
+# 3) init (talks to your remote backend — TFC or S3)
+terraform init
+
+# 4) review a destroy plan (ALWAYS)
+terraform plan -destroy -var-file=dev.tfvars
+
+# 5) destroy (IF the plan is correct)
+terraform destroy -var-file=dev.tfvars
+```
+
+**State backends**
+
+- **Terraform Cloud** (recommended): built-in locking/history; this repo’s `backend.tf` is already wired to TFC (Local/CLI execution).
+- **S3 + DynamoDB**: ensure AWS credentials can access the S3 bucket and DynamoDB lock table.
+
+**Best practices**
+
+- Always run `terraform plan -destroy` before the actual destroy.
+- Don’t change `*.tfvars` between plan and destroy (avoid drift).
+- Keep your `terraform.lock.hcl` versioned; never commit `terraform.tfstate` or `.terraform/`.
+
+---
+
+### Option B — Destroy via GitHub Actions (safest for teams)
+
+Use the workflow: `.github/workflows/terraform-destroy.yml`.
+
+- Trigger manually: **Actions → terraform-destroy → Run workflow**
+- Inputs:
+  - `env`: `dev` | `staging` | `prod`
+  - `confirm`: must be **`DESTROY`**
+- **Prod guardrail**: the job targets a GitHub **Environment** named `prod` (configure required reviewers in repo settings).
+- What it does:
+  1. `terraform init`
+  2. `terraform plan -destroy` (for visibility/review in logs)
+  3. `terraform destroy -auto-approve`
+
+**Required GitHub Secrets (same as other workflows)**
+
+- `TF_API_TOKEN` — Terraform Cloud API token
+- `SYSDIG_SECURE_API_TOKEN` — Sysdig Secure token (team-scoped, admin-capable)
+- `SYSDIG_MONITOR_API_TOKEN` — Sysdig Monitor token (team-scoped, admin-capable)
+
+---
+
+### Post-destroy cleanup
+
+- Verify in **Sysdig UI** that resources are gone:
+  - Platform → **Roles**
+  - Secure → **Teams**
+  - Monitor → **Alerts**
+- In **GCP**, confirm deletion of Pub/Sub topics/subscriptions, Log Router sinks, service accounts and IAM bindings (as applicable).
+- Rotate or revoke any tokens/keys no longer needed.
+- (Optional) Archive/delete the **Terraform Cloud workspace** (or the S3 key) for that env if the environment is retired.
+
+---
+
+### FAQ (destroy)
+
+- **Why require a typed confirmation in CI?** Prevents accidental deletion and provides an auditable intent.
+- **Why `plan -destroy` first?** Human review of the delete set is a core Terraform best practice.
+- **Can I partially destroy?** You can use `-target=...`, but prefer full destroy to avoid orphans unless you’re handling a very specific rollback.
+
+---
+
 ## Conventions & housekeeping
 
 - **Commit**: `.terraform.lock.hcl` (per env), workflows, modules, and `*.tfvars.example` (but **not** secrets)
